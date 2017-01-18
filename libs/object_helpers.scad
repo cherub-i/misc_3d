@@ -19,7 +19,7 @@
 //   rtype = [ "all" rounds all edges | "top" rounds top and vertical edges | "sides" rounds vertical edges ]
 //   otype = [ "closed" closed hollowed cube | "top" cube open on top | "bottom" cube opened on botton | "topbottom" cube opened on top and botton ]
 // 
-// RCube(x,y,z,r=0,type="all",s=10,center=true)
+// RCube(x,y,z,r=0,type="all",center=true,s=10)
 //   creates a solid cube which can have rounded edges
 //   x, y, z = outer measures
 //   r = radius of rounded edges, 0 deactivates rounding
@@ -31,7 +31,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-module LiddedBox(x,y,z,lid_z,wst,part,r,rtype) {
+module LiddedBox(x,y,z,lid_z,wst,part,r,rtype,innards) {
   //lid_z = height of lid
   //wst = wallstrength
   //part = "box" | "lid"
@@ -56,35 +56,43 @@ module LiddedBox(x,y,z,lid_z,wst,part,r,rtype) {
     if (rtype=="all")
       assert_greater_or_equal(min(box_z,lid_z),r,"for a fully rounded box, box_z and lid_z must be greater than r");
   }
+  r_inner = r>0 ? r-(wst-lip_wst) : 0;
+  
     
   if (part=="box") {   
     difference() {
-      SCube(x,y,z,wst,r,rtype,"closed",false);
+      //create the closed box
+      SCube(x,y,z,wst,r,rtype,"closed",false,innards);
+      //cut down to box height + lip height
       translate([0,0,box_z+lip_z])
         cube([x,y,lid_z-lip_z]);
-      // now trim down the lip
+      //now trim down the lip
       translate([0,0,box_z])
         SCube(x,y,lip_z,wst-lip_wst,r,"sides","topbottom",false);
     }
-  } else {  // type = "lid", etc.
+  } else {  // type = "lid"
     translate([0,y,z]) rotate([180,0,0])      
       difference() {
-        SCube(x,y,z,wst,r,rtype,"closed",false);
+        //create the closed box
+        SCube(x,y,z,wst,r,rtype,"closed",false,innards);
+        //cut down to lid height + lip height
         cube([x,y,box_z-lip_z]);
-        // now trim down the lip
+        // now cut out the inside of the lip
         translate([wst-lip_wst,wst-lip_wst,box_z-lip_z])
-          SCube(x-2*(wst-lip_wst),y-2*(wst-lip_wst),lip_z,wst-lip_wst,r-(wst-lip_wst),"sides","topbottom",false);
+          RCube(x-2*(wst-lip_wst),y-2*(wst-lip_wst),lip_z,r_inner,"sides",false);
       }
   }
 }
 
-module SCube(x,y,z,wst,r=0,rtype="all",otype="closed",center=true) {
+module SCube(x,y,z,wst,r=0,rtype="all",otype="closed",center=true,innards=[]) {
   //wst = wallstrength
   //r = radius for rounding of edges, 0 for no rounding
   //rtype = [ "all" rounds all edges | "top" rounds top and vertical edges | "sides" rounds only vertical edges ]
   rtype_allowed=[["all",1],["top",2],["sides",3]];
   //otype = [ "closed" closed hollowed cube | "top" cube open on top | "bottom" cube opened on botton | "topbottom" cube opened on top and botton ]
   otype_allowed=[["closed",1],["top",2],["bottom",3],["topbottom",4]];
+  //inards = complex TODO describe!
+  innards_allowed = [["c",1],["v",2]];
   
   assert_is_element_of(rtype,rtype_allowed,"unsupported rtype");
   assert_is_element_of(otype,otype_allowed,"unsupported otype");
@@ -113,10 +121,24 @@ module SCube(x,y,z,wst,r=0,rtype="all",otype="closed",center=true) {
       translate([0,0,z_trans_actual])
         RCube(x-2*wst,y-2*wst,z_inner,r_inner,rtype);
     }
+    if (innards)    
+      intersection() {
+        translate([0,0,z_trans_actual])
+          RCube(x-2*wst,y-2*wst,z_inner,r_inner,rtype);
+        for ( in = innards ) {
+          assert_is_element_of(in[0],innards_allowed,"unsupported innard");
+          echo(in);
+          x_in = in[1][0] == "max" ? x : in[1][0];
+          y_in = in[1][1] == "max" ? y : in[1][1];
+          z_in = in[1][2] == "max" ? z : in[1][2];
+          if (in[0] == "c")
+            cube([x_in,y_in,z_in],true);
+        }
+    }
   }
 }
 
-module RCube(x,y,z,r=0,type="all",s=10,center=true) {
+module RCube(x,y,z,r=0,type="all",center=true,s=3) {
   //r = radius of rounded edges, 0 deactivates rounding
   //type = [ "all" rounds all edges | "top" rounds top and vertical edges | "sides" rounds vertical edges ]
   //s = number of sides of the rounding
@@ -124,7 +146,7 @@ module RCube(x,y,z,r=0,type="all",s=10,center=true) {
   xyz_uncenter = (center) ? [0,0,0] : [x/2,y/2,z/2];
 
   if (r==0) {
-    cube([x,y,z],true);
+    cube([x,y,z],center);
   } else { //r>0
     //assert_is_element_of(type, ["all","top","sides"], "message");
     if (type=="all") {

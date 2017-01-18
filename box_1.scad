@@ -7,15 +7,21 @@ $fa = 5;
 x_box=150;
 y_box=200;
 z_box=65;
-lid_z_box=30;
-r_box=5;
+lid_z_box=15;
+r_box=0;
+t_box="all";
 wst_box=3;
 
 bcb=[x_box/2,y_box/2,wst_box];
 
+b_innards = [ ["c", ["max",15,999]], ["v", [100,50,999]] ];
 
-LiddedBox(x_box,y_box,z_box,lid_z_box,wst_box,"box",r_box,"top");
 
+
+
+LiddedBox(x_box,y_box,z_box,lid_z_box,wst_box,"box",r_box,t_box,b_innards);
+
+/*
 //add support for drone
 translate([bcb[0],bcb[1],bcb[2]+13/2])
   SCube(88,88,13,1,7,"sides","topbottom",true);
@@ -23,16 +29,15 @@ translate([bcb[0],bcb[1],bcb[2]+13/2])
 //add posts for securing the drone
 translate([bcb[0]-5,bcb[1]-10,bcb[2]])
   tube_grid(20,2,2,20,10);
-
-
+*/
 
 translate([x_box+10,0,0]) {
-  LiddedBox(x_box,y_box,z_box,lid_z_box,wst_box,"lid",r_box,"top");
+  LiddedBox(x_box,y_box,z_box,lid_z_box,wst_box,"lid",r_box,t_box,b_innards);
   //translate([bcb[0]-2*15,bcb[1]-2*15,bcb[2]])
     //tube_grid(10,5,5,15,15);
-
 }
 
+/*
 module tube_grid(z,row,cols,row_space,col_space) {
   for (x = [0 : col_space : (cols-1) * col_space] ) {
     for (y = [0 : row_space : (row-1) * row_space] ) {
@@ -53,6 +58,7 @@ module cylinder_outer(height,radius,fn){
   fudge = 1/cos(180/fn);
   cylinder(h=height,r=radius*fudge,$fn=fn);
 }
+*/
 
 /*translate([0,0,0]) {
   difference() {
@@ -61,5 +67,3 @@ module cylinder_outer(height,radius,fn){
       linear_extrude(1) text("J", size=5, font="Liberation Sans", halign="center");
   }  
  }*/
- 
- 
