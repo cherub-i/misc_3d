@@ -19,18 +19,22 @@ y_box_inside=y_box-2*wst_box;
 //bcb=[x_box/2,y_box/2,wst_box];
 
 b_innards=[ 
-  ["SC", [x_box_inside/2-88/2,y_box_inside/2-88/2+(y_box_inside-x_box_inside-1.5)/2,0], [88,88,13], 1, 7, "sides", "topbottom"], //holder for drone
+  //holder for drone
+  ["SC", [x_box_inside/2-88/2,y_box_inside/2-88/2+(y_box_inside-x_box_inside-1.5)/2,0], [88,88,15], 1, 7, "sides", "topbottom"],
+  
+  //main separating wall
+  ["c",  [0,y_box_inside-x_box_inside-1.5,0], ["max",1.5,"max"]], 
 
-  ["c",  [0,y_box_inside-x_box_inside-1.5,0], ["max",1.5,"max"]], // main separating wall
+  //battery compartments
+  ["SC", [0*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], 
+  ["SC", [1*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], 
+  ["SC", [2*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], 
+  ["SC", [3*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], 
+  ["SC", [4*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], 
+  ["SC", [5*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], 
 
-  ["SC", [0*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], //battery compartment
-  ["SC", [1*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], //battery compartment
-  ["SC", [2*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], //battery compartment
-  ["SC", [3*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], //battery compartment
-  ["SC", [4*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], //battery compartment
-  ["SC", [5*11-1,22,0], [12,28,40], 1, 0, "none", "topbottom"], //battery compartment
-
-  ["c", [6*11-1,0,0], [1,50,"max"]], // additional separating wall
+  // additional separating wall
+  ["c", [6*11-1,0,0], [1,50,"max"]], 
 
   // magnet holders - note: this must respect lip_z which is defined inside LiddedBox
   ["MH", [5.7,5.7,0], z_box-lid_z_box+5, 45, 5], 
@@ -81,11 +85,3 @@ module cylinder_outer(height,radius,fn){
   cylinder(h=height,r=radius*fudge,$fn=fn);
 }
 */
-
-/*translate([0,0,0]) {
-  difference() {
-    cube([10,1,10]);
-    translate([5,1,6]) rotate([90,0,0])
-      linear_extrude(1) text("J", size=5, font="Liberation Sans", halign="center");
-  }  
- }*/
