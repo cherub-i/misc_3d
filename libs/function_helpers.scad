@@ -22,7 +22,7 @@ module assert_greater(a,b,msg) {
   //asserts if a is bigger than b
   if (a<=b) {
     echo("<font color='red'><b>assertion failed</b></font>");
-    echo("a>b failed for a=", a, " b=", b, msg);
+    echo("a>b failed for a:",a, " b:",b, msg);
     echo("", assertion_failed());
   }
 }
@@ -31,7 +31,7 @@ module assert_greater_or_equal(a,b,msg) {
   //asserts if a is bigger than b
   if (a<b) {
     echo("<font color='red'><b>assertion failed</b></font>");
-    echo("a>=b failed for a=", a, " b=", b, msg);
+    echo("a>=b failed for a:",a, " b:",b, msg);
     echo("", assertion_failed());
   }
 }
@@ -40,7 +40,7 @@ module assert_lesser(a,b,msg) {
   //asserts if a is bigger than b
   if (a>=b) {
     echo("<font color='red'><b>assertion failed</b></font>");
-    echo("a<b failed for a=", a, " b=", b, msg);
+    echo("a<b failed for a:",a, " b:",b, msg);
     echo("", assertion_failed());
   }
 }
@@ -49,7 +49,7 @@ module assert_lesser_or_equal(a,b,msg) {
   //asserts if a is bigger than b
   if (a>b) {
     echo("<font color='red'><b>assertion failed</b></font>");
-    echo("a<=b failed for a=", a, " b=", b, msg);
+    echo("a<=b failed for a:",a, " b:",b, msg);
     echo("", assertion_failed());
   }
 }
@@ -58,7 +58,7 @@ module assert_is_element_of(elem,list,msg) {
   found=search([elem],list);
   if(!(found[0]>=0)) {
     echo("<font color='red'><b>assertion failed</b></font>");
-    echo("element must be part of list failed for elem=",elem," list=",list, msg);
+    echo("element must be part of list failed for elem:",elem, " list:",list, msg);
     echo("", assertion_failed());
   }    
 }

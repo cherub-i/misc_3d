@@ -11,7 +11,7 @@
 //   r = radius of rounded edges, 0 deactivates rounding (default = 0)
 //   rtype = [ "all" rounds all edges | "top" rounds top and vertical edges | "sides" rounds vertical edges ]
 // 
-// SCube(x,y,z,wst,r=0,rtype="all",otype="closed",center=true,innards)
+// SCube(x,y,z,wst,r=0,rtype="all",otype="closed",center=true,innards,cutouts)
 //   creates a hollow cube which can have rounded edges
 //   x, y, z = outer measures
 //   wst = wall strength
@@ -109,7 +109,7 @@ module SCube(x,y,z,wst,r=0,rtype="none",otype="closed",center=true,innards=[],cu
   //inards = complex TODO describe!
   innards_allowed = [["c",1],["SC",2],["MH",3]];
   //cutouts = cutouts in the hull - EXPERIMENTAL
-  cutouts_allowed = [["text",1]];
+  cutouts_allowed = [["text",1], ["rect",2], ["circle",3]];
   cutouts_pos_allowed = [["front",1], ["back",2], ["left",3], ["right",4], ["top",5], ["bottom",6]];
   
   assert_is_element_of(rtype,rtype_allowed,"unsupported rtype");
@@ -151,10 +151,7 @@ module SCube(x,y,z,wst,r=0,rtype="none",otype="closed",center=true,innards=[],cu
           side=in[1];
           xy_pos=in[2];
           depth=in[3];
-          text_content=in[4];
-          text_size=in[5];
-          text_style=in[6];
-
+          
           //calculate where to rotate and translate in order to put on the respective side
           cutout_pos = 
             side=="front"  ? [[-x/2 + xy_pos[0], -y/2 + depth    , -z/2 + xy_pos[1]], [90,  0, 0  ]] : 
@@ -166,8 +163,26 @@ module SCube(x,y,z,wst,r=0,rtype="none",otype="closed",center=true,innards=[],cu
             [[0,0,0], [0,0,0]];
           
           if ( in[0]=="text" ) {
+            text_content=in[4];
+            text_size=in[5];
+            text_style=in[6];
+            
             translate(cutout_pos[0]) rotate(cutout_pos[1])
               linear_extrude(depth) text(text_content, text_size, font = text_style);
+          } else if ( in[0]=="rect" ) {
+            square_xy=in[4];
+            square_center=in[5];
+            
+            translate(cutout_pos[0]) rotate(cutout_pos[1])
+              linear_extrude(depth) square(square_xy, square_center);
+          } else if ( in[0]=="circle" ) {
+            circle_d=in[4];
+            circle_center=in[5];
+            
+            circle_translate = circle_center ? [0,0,0] : [circle_d/2, circle_d/2, 0];
+            
+            translate(cutout_pos[0]) rotate(cutout_pos[1])
+              linear_extrude(depth) translate(circle_translate) circle(d=circle_d);
           }
         }
       }
@@ -224,79 +239,226 @@ module SCube(x,y,z,wst,r=0,rtype="none",otype="closed",center=true,innards=[],cu
 }
 
 module RCube(x,y,z,r=0,type="all",center=true,s=10) {
-  //r = radius of rounded edges, 0 deactivates rounding
-  //type = [ "all" rounds all edges | "top" rounds top and vertical edges | "sides" rounds vertical edges ]
-  //s = number of sides of the rounding
-
-  xyz_uncenter = (center) ? [0,0,0] : [x/2,y/2,z/2];
-
+  //deprecated
+  echo("RCube is deprecated, use RCube2 instead");
+  
   if (r==0) {
-    cube([x,y,z],center);
+    RCube2([x,y,z]);
   } else { //r>0
-    //assert_is_element_of(type, ["all","top","sides"], "message");
     if (type=="all") {
-      assert_greater_or_equal(x/2,r,"x/2 > r");
-      assert_greater_or_equal(y/2,r,"y/2 > r");
-      assert_greater_or_equal(z/2,r,"z/2 > r");
-      
-      translate(xyz_uncenter) {
-        hull() {
-          cross_box(x,y,z,r);
-          translate([  x/2-r ,  y/2-r ,  z/2-r ]) sphere(r, $fn=4*s);
-          translate([  x/2-r ,-(y/2-r),  z/2-r ]) sphere(r, $fn=4*s);
-          translate([-(x/2-r),-(y/2-r),  z/2-r ]) sphere(r, $fn=4*s);
-          translate([-(x/2-r),  y/2-r ,  z/2-r ]) sphere(r, $fn=4*s);
-
-          translate([  x/2-r ,  y/2-r ,-(z/2-r)]) sphere(r, $fn=4*s);
-          translate([  x/2-r ,-(y/2-r),-(z/2-r)]) sphere(r, $fn=4*s);
-          translate([-(x/2-r),-(y/2-r),-(z/2-r)]) sphere(r, $fn=4*s);
-          translate([-(x/2-r),  y/2-r ,-(z/2-r)]) sphere(r, $fn=4*s);
-        }
-      }
+      RCube2([x,y,z], [r,[r,r,r,r],r]);
     } else if (type=="sides") {
-      assert_greater_or_equal(x/2,r,"x/2 > r");
-      assert_greater_or_equal(y/2,r,"y/2 > r");
-      
-      translate(xyz_uncenter) {
-        hull() {
-          cross_box(x,y,z,r);
-
-          translate([  x/2 -r ,  y/2 -r ,0]) cylinder(z,r,r,true, $fn=4*s);
-          translate([  x/2 -r ,-(y/2 -r),0]) cylinder(z,r,r,true, $fn=4*s);
-          translate([-(x/2 -r),-(y/2 -r),0]) cylinder(z,r,r,true, $fn=4*s);
-          translate([-(x/2 -r),  y/2 -r ,0]) cylinder(z,r,r,true, $fn=4*s);
-        }
-      }
+      RCube2([x,y,z], [0,[r,r,r,r],0]);
     } else if (type=="top") {
-      assert_greater_or_equal(x/2,r,"x/2 > r");
-      assert_greater_or_equal(y/2,r,"y/2 > r");
-      assert_greater_or_equal(z/2,r,"z/2 > r");
-      
-      translate(xyz_uncenter) {
-        hull() {
-          cross_box(x,y,z,r);
-          translate([  x/2-r ,  y/2-r ,  z/2-r ]) sphere(r, $fn=4*s);
-          translate([  x/2-r ,-(y/2-r),  z/2-r ]) sphere(r, $fn=4*s);
-          translate([-(x/2-r),-(y/2-r),  z/2-r ]) sphere(r, $fn=4*s);
-          translate([-(x/2-r),  y/2-r ,  z/2-r ]) sphere(r, $fn=4*s);
+      RCube2([x,y,z], [r,[r,r,r,r],0]);
+    } 
+  }
+  
+  //deprecated old code
+  if (false) {
+    //r = radius of rounded edges, 0 deactivates rounding
+    //type = [ "all" rounds all edges | "top" rounds top and vertical edges | "sides" rounds vertical edges ]
+    //s = number of sides of the rounding
 
-          translate([  x/2-r ,  y/2-r ,-(z/2-r/2)]) cylinder(r,r,r,true, $fn=4*s);
-          translate([  x/2-r ,-(y/2-r),-(z/2-r/2)]) cylinder(r,r,r,true, $fn=4*s);
-          translate([-(x/2-r),-(y/2-r),-(z/2-r/2)]) cylinder(r,r,r,true, $fn=4*s);
-          translate([-(x/2-r),  y/2-r ,-(z/2-r/2)]) cylinder(r,r,r,true, $fn=4*s);
+    xyz_uncenter = (center) ? [0,0,0] : [x/2,y/2,z/2];
+
+    if (r==0) {
+      cube([x,y,z],center);
+    } else { //r>0
+      //assert_is_element_of(type, ["all","top","sides"], "message");
+      if (type=="all") {
+        assert_greater_or_equal(x/2,r,"x/2 > r");
+        assert_greater_or_equal(y/2,r,"y/2 > r");
+        assert_greater_or_equal(z/2,r,"z/2 > r");
+        
+        translate(xyz_uncenter) {
+          hull() {
+            CrossBox(x,y,z,r);
+            translate([  x/2-r ,  y/2-r ,  z/2-r ]) sphere(r, $fn=4*s);
+            translate([  x/2-r ,-(y/2-r),  z/2-r ]) sphere(r, $fn=4*s);
+            translate([-(x/2-r),-(y/2-r),  z/2-r ]) sphere(r, $fn=4*s);
+            translate([-(x/2-r),  y/2-r ,  z/2-r ]) sphere(r, $fn=4*s);
+
+            translate([  x/2-r ,  y/2-r ,-(z/2-r)]) sphere(r, $fn=4*s);
+            translate([  x/2-r ,-(y/2-r),-(z/2-r)]) sphere(r, $fn=4*s);
+            translate([-(x/2-r),-(y/2-r),-(z/2-r)]) sphere(r, $fn=4*s);
+            translate([-(x/2-r),  y/2-r ,-(z/2-r)]) sphere(r, $fn=4*s);
+          }
+        }
+      } else if (type=="sides") {
+        assert_greater_or_equal(x/2,r,"x/2 > r");
+        assert_greater_or_equal(y/2,r,"y/2 > r");
+        
+        translate(xyz_uncenter) {
+          hull() {
+            CrossBox(x,y,z,r);
+
+            translate([  x/2 -r ,  y/2 -r ,0]) cylinder(z,r,r,true, $fn=4*s);
+            translate([  x/2 -r ,-(y/2 -r),0]) cylinder(z,r,r,true, $fn=4*s);
+            translate([-(x/2 -r),-(y/2 -r),0]) cylinder(z,r,r,true, $fn=4*s);
+            translate([-(x/2 -r),  y/2 -r ,0]) cylinder(z,r,r,true, $fn=4*s);
+          }
+        }
+      } else if (type=="top") {
+        assert_greater_or_equal(x/2,r,"x/2 > r");
+        assert_greater_or_equal(y/2,r,"y/2 > r");
+        assert_greater_or_equal(z/2,r,"z/2 > r");
+        
+        translate(xyz_uncenter) {
+          hull() {
+            CrossBox(x,y,z,r);
+            translate([  x/2-r ,  y/2-r ,  z/2-r ]) sphere(r, $fn=4*s);
+            translate([  x/2-r ,-(y/2-r),  z/2-r ]) sphere(r, $fn=4*s);
+            translate([-(x/2-r),-(y/2-r),  z/2-r ]) sphere(r, $fn=4*s);
+            translate([-(x/2-r),  y/2-r ,  z/2-r ]) sphere(r, $fn=4*s);
+
+            translate([  x/2-r ,  y/2-r ,-(z/2-r/2)]) cylinder(r,r,r,true, $fn=4*s);
+            translate([  x/2-r ,-(y/2-r),-(z/2-r/2)]) cylinder(r,r,r,true, $fn=4*s);
+            translate([-(x/2-r),-(y/2-r),-(z/2-r/2)]) cylinder(r,r,r,true, $fn=4*s);
+            translate([-(x/2-r),  y/2-r ,-(z/2-r/2)]) cylinder(r,r,r,true, $fn=4*s);
+          }
         }
       }
-    } 
+    }
   }
 }
 
-module cross_box(x,y,z,r) {
+
+module RCube2(size=[10,10,10],rounding=[0,[0,0,0,0],0],center=true) {
+  // draws a solid cube which may have rounded edges
+  //   size = [x, y, z] /gives outer dimensions
+  //   rounding = [top rounding, [corner 1 rounding, c2r, c3r, c4r] bottom_rounding] /gives the radius for rounding the edges: all top or all bottom edges or individual vertical corners - ccw from top left
+
+  x=size[0];
+  y=size[1];
+  z=size[2];
+
+  r_z=[ rounding[0] < 0.1 ? 0.09 : rounding[0] , rounding[2] < 0.1 ? 0.09 : rounding[2] ];
+  r_mid=[ 
+          rounding[1][0] < 0.1 ? 0.09 : rounding[1][0] , 
+          rounding[1][1] < 0.1 ? 0.09 : rounding[1][1] , 
+          rounding[1][2] < 0.1 ? 0.09 : rounding[1][2] , 
+          rounding[1][3] < 0.1 ? 0.09 : rounding[1][3] 
+        ];
+  
+  xyz_uncenter = (center) ? [0,0,0] : [x/2,y/2,z/2];
+
+  ctm=[
+    //the top four corners - [x, y, z] each with the factors for [whole term, xy-or-z, r]
+    [
+      [ [ -1, 1/2, -1 ], [  1, 1/2, -1 ], [  1, 1/2, -1 ] ],
+      [ [ -1, 1/2, -1 ], [ -1, 1/2, -1 ], [  1, 1/2, -1 ] ],
+      [ [  1, 1/2, -1 ], [ -1, 1/2, -1 ], [  1, 1/2, -1 ] ],
+      [ [  1, 1/2, -1 ], [  1, 1/2, -1 ], [  1, 1/2, -1 ] ]
+    ],
+    //the bottom four corners
+    [
+      [ [ -1, 1/2, -1 ], [  1, 1/2, -1 ], [ -1, 1/2, -1 ] ],
+      [ [ -1, 1/2, -1 ], [ -1, 1/2, -1 ], [ -1, 1/2, -1 ] ],
+      [ [  1, 1/2, -1 ], [ -1, 1/2, -1 ], [ -1, 1/2, -1 ] ],
+      [ [  1, 1/2, -1 ], [  1, 1/2, -1 ], [ -1, 1/2, -1 ] ]
+    ]
+  ];
+  
+  translate(xyz_uncenter) {
+    if ( r_z[0] < 0.1 && r_z[1] < 0.1 && r_mid[0] < 0.1 && r_mid[1] < 0.1 && r_mid[2] < 0.1 && r_mid[3] < 0.1 ) {
+      cube([x,y,z],true);
+    } else {
+      hull() {
+        //CrossBox(x,y,z,2); /not needed
+        for (lv = [0:1]) { 
+          for (cr = [0:3]) {
+            echo("l:",lv, "c:",cr, "ctm:",ctm[lv][cr], "r_z:",r_z[lv], "r_mid:",r_mid[cr]);
+            translate([ ctm[lv][cr][0][0] * (x * ctm[lv][cr][0][1] + (r_mid[cr] < 0.1 ? r_z[lv] : r_mid[cr]) * ctm[lv][cr][0][2]),  
+                        ctm[lv][cr][1][0] * (y * ctm[lv][cr][1][1] + (r_mid[cr] < 0.1 ? r_z[lv] : r_mid[cr]) * ctm[lv][cr][1][2]), 
+                        ctm[lv][cr][2][0] * (z * ctm[lv][cr][2][1] + r_z[lv]    * ctm[lv][cr][2][2]) ]) RCubeCorner(r_z[lv], r_mid[cr]);
+          }
+        }
+      } 
+    }
+  }
+}
+
+module RCubeCorner(r_z, r_xy) {
+  // creates an geometrical form which has a rounding along the z-axis and a differnet rounding along the xy-axis
+  //   r_z = radius of rounding along z-axis - values < 0.1 are interpreted as 0
+  //   r_xy = radius of rounding along xy-axis - values < 0.1 are interpreted as 0
+  echo("running RCubeCorner(r_z, r_xy)", "r_z:",r_z, "r_xy:",r_xy);
+  if ( r_z < 0.1 ) {
+    //no z rounding
+    if ( r_xy < 0.1 ) {
+      //no xy rounding
+      echo("this one");
+      cube([r_xy*2,r_xy*2,r_z],true);
+    } else {
+      //with xy_rounding
+      cylinder(r_z,r_xy,r_xy, true);
+    }
+  } else {
+    //with z rounding
+    if ( r_z == r_xy ) {
+      //z and xy rounding same value
+      sphere(r_z);
+    } else if ( r_z <= r_xy ) {
+      TorusOuterHalf( r_z, r_xy );
+    } else if ( r_xy < 0.1 ) {
+      //translate([r_z-r_xy/2,-r_z+r_xy/2,0]) 
+      intersection() {
+        rotate([0,90,0]) cylinder(2*r_z,r_z,r_z,true);
+        rotate([90,0,0]) cylinder(2*r_z,r_z,r_z,true);
+      }
+    } else {
+      echo("r_z:",r_z, "r_xy:",r_xy);
+      assert(true,"cannot create a RCubeCorner element for given r_z and r_xy"); 
+    }
+  }
+}
+
+module Torus(r1, r2) {
+  // creates a torus
+  //   r1 = radius of the edge of the torus
+  //   r2 = radius of the torus itself
+  assert_greater_or_equal(r2/2,r1,"r1 > r2/2 in Torus");
+
+  r_torus = r1;           // Radius   of  Torus
+  r_total = r2 - r1;     // Radius   of  Torus overall 
+    
+  rotate_extrude(convexity = 10) // the value is the sides the finer
+    translate([r_total, 0, 0])
+      circle(r_torus); // the value is the sides
+}
+
+module TorusOuterHalf(r1, r2) {
+  // creates a torus-like shape based on the outer half circle of what a torus would be based of
+  // (bad explanation I know - create one and you'll understand)
+  //   r1 = radius of the edge of the torus
+  //   r2 = radius of the torus itself
+  
+  //echo("running TorusOuterHalf(r1, r2)", "r1:",r1, "r2:",r2);
+  assert_greater_or_equal(r2,r1,"r1 > r2 in TorusOuterHalf");
+  
+  r_torus = r1;
+  r_total = r2 - r1;
+    
+  rotate_extrude(convexity = 10) { // the value is the sides the finer
+    translate([r_total, 0, 0]) {
+      difference() {
+        circle(r_torus);
+        translate([-r_torus,0,0]) square([r_torus*2,r_torus*2], true);
+      }
+    }
+  }
+}
+
+module CrossBox(x,y,z,r) {
+  // helper function, currently not needed
 	cube(size=[x-2*r,y-2*r,z],center=true);
 	cube(size=[x-2*r,y,z-2*r],center=true);
 	cube(size=[x,y-2*r,z-2*r],center=true);
 }
 
 module MagHolder(z,split_z,rotate=0,xy=5) {
+  // creates a holder for cube neodym magnets with 4mm side length
   mag_size=4;
   min_wst=0.5;
   assert_greater_or_equal(xy,mag_size+2*min_wst,"MagHolder: xy must be greater than mag_size + 2*min_wst");
@@ -309,18 +471,30 @@ module MagHolder(z,split_z,rotate=0,xy=5) {
 }
 
 module PyramidenStumpf(Breite, Laenge, Hoehe, Verschmalerung) {
-  //zentriert gezeichneter Pyramidenstumpf, die obere Fläche wird 
-  //von jeder Kante aus um das Maß "Verschmalerung" verkleinert
+  //deprecated
+  echo("PyramidenStumpf is deprecated, use PyramidStump instead");
+  PyramidStump([Breite, Laenge, Hoehe], Verschmalerung);
+}
+
+module PyramidStump(size, narrowing) {
+  // creates a pyramid stump with a top area whose four edges are pushed inwards by narrowing
+  //   size = [x, y, z] /gives outer dimensions
+  //   narrowing = amount by which edges of pyramid top area are pushed inwards
+  
+  x=size[0];
+  y=size[1];
+  z=size[2];
+  
   polyhedron(
-    points = [ [Breite/2,Laenge/2,0],   //0
-               [Breite/2,-Laenge/2,0],  //1
-               [-Breite/2,-Laenge/2,0], //2
-               [-Breite/2,Laenge/2,0],  //3
+    points = [ [  x/2,  y/2, 0 ],   //0
+               [  x/2, -y/2, 0 ],  //1
+               [ -x/2, -y/2, 0 ], //2
+               [ -x/2,  y/2, 0 ],  //3
                
-               [Breite/2-Verschmalerung,Laenge/2-Verschmalerung,Hoehe],   //4
-               [Breite/2-Verschmalerung,-Laenge/2+Verschmalerung,Hoehe],  //5
-               [-Breite/2+Verschmalerung,-Laenge/2+Verschmalerung,Hoehe], //6
-               [-Breite/2+Verschmalerung,Laenge/2-Verschmalerung,Hoehe]   //7
+               [  x/2-narrowing,  y/2-narrowing, z],   //4
+               [  x/2-narrowing, -y/2+narrowing, z],  //5
+               [ -x/2+narrowing, -y/2+narrowing, z], //6
+               [ -x/2+narrowing,  y/2-narrowing, z]   //7
     ],
     faces = [ [3,2,1,0], //bottom
               [4,5,6,7], //top
