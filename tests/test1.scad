@@ -1,5 +1,5 @@
-use <libs/function_helpers.scad>;
-include <libs/object_helpers.scad>;
+use <../libs/function_helpers.scad>;
+include <../libs/object_helpers.scad>;
 
 $fa = 5;
 

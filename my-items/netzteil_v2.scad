@@ -2,8 +2,8 @@
 // copyright by Bastian Baumeister | openscad@bastianbaumeister.de 
 // endcap for power supply unit
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-use <libs/function_helpers.scad>;
-include <libs/object_helpers.scad>;
+use <../libs/function_helpers.scad>;
+include <../libs/object_helpers.scad>;
 
 $fa = 5;
 
@@ -66,7 +66,7 @@ module xt60_out() {
 }
 
 
-SCube(x_cap,y_cap,z_cap,wst_cap,r=0,rtype="none",otype="top",center=true,cutouts=cutouts_cap);
+SCube2([x_cap,y_cap,z_cap],wst_cap,[0,[0,0,0,0],0],otype="top",center=true,cutouts=cutouts_cap);
 //add ridge to keep it from slipping inwards to much
 translate([0,0,5])
   difference() {
